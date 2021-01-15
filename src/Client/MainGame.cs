@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -27,7 +27,8 @@ namespace Client
         private float _fps;
         private readonly int[] _samples = new int[NumberSamples];
         private int _currentSample;
-        private int ticksAggregate;
+        private int _ticksAggregate;
+        private float _averageFrameTime;
 
         public MainGame(ILogger logger)
         {
@@ -93,16 +94,18 @@ namespace Client
             {
                 return;
             }
-            _samples[_currentSample++] = (int)gameTime.ElapsedGameTime.Ticks;
-            ticksAggregate += (int)gameTime.ElapsedGameTime.Ticks;
-            if (ticksAggregate > TimeSpan.TicksPerSecond)
+
+            var ticks = (int)gameTime.ElapsedGameTime.Ticks;
+            _samples[_currentSample++] = ticks;
+            _ticksAggregate += ticks;
+            if (_ticksAggregate > TimeSpan.TicksPerSecond)
             {
-                ticksAggregate -= (int)TimeSpan.TicksPerSecond;
+                _ticksAggregate -= (int)TimeSpan.TicksPerSecond;
             }
             if (_currentSample == NumberSamples)
             {
-                float AverageFrameTime = Sum(_samples) / NumberSamples;
-                _fps = TimeSpan.TicksPerSecond / AverageFrameTime;
+                _averageFrameTime = Sum(_samples) / NumberSamples;
+                _fps = TimeSpan.TicksPerSecond / _averageFrameTime;
                 _currentSample = 0;
             }
 
@@ -120,7 +123,6 @@ namespace Client
                 GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, _vertices.Count / 3);
             }
 
-            Window.Title = $"FPS: {_fps}";
             base.Draw(gameTime);
         }
 
@@ -158,27 +160,29 @@ namespace Client
                 _vertices.Add(new VertexPositionColor(p2, color));
             }
 
-            var maxX = 8;
-            var maxY = 8;
+            var maxX = 12;
+            var maxY = 12;
             var random = new Random();
             var colors = new[]
             {
-                Color.Fuchsia,
-                Color.SteelBlue,
-                Color.LimeGreen,
-                Color.YellowGreen,
-                Color.Purple,
-                Color.OrangeRed
+                Color.Red,
+                Color.DarkRed,
+                Color.IndianRed,
+                Color.OrangeRed,
+                Color.MediumVioletRed,
+                Color.PaleVioletRed,
+                Color.Firebrick
             };
 
-            for (var x = 0; x < maxX; ++x)
+            for (var x = -4; x < maxX; ++x)
             {
-                for (var y = 0; y < maxY; ++y)
+                for (var y = -4; y < maxY; ++y)
                 {
-                    if (x == random.Next(0, maxX) || y == random.Next(0, maxY))
+                    if (x == -4 && y == -4 || x == maxX - 1 && y == -4 || x == maxX - 1 && y == maxY - 1 || x == -4 && y == maxY - 1)
                     {
-                        DrawSquare(colors[random.Next(0, colors.Length)], (x - y) * TileSizeHalf, (x + y) * TileSizeHalf - 200, 0);
+                        continue;
                     }
+                    DrawSquare(colors[random.Next(0, colors.Length)], (x - y) * TileSizeHalf, (x + y) * TileSizeHalf - 200, 0);
                 }
             }
 
@@ -200,6 +204,8 @@ namespace Client
             {
                 return;
             }
+
+            Window.Title = $"FPS: {_fps:F0}";
 
             var previousKeyboardState = _currentKeyboardState;
             var previousMouseState = _currentMouseState;
