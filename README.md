@@ -1,2 +1,4 @@
-# FNA-Bare-Template
-Bootstrap FNA based projects quickly
+# FNA-Bootstrap
+Quickly bootstrap FNA based projects.
+
+![fna-bootstrap](assets/screenshots/fna-bootstrap.png)
